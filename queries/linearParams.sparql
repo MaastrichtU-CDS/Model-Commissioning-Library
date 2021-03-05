@@ -1,0 +1,20 @@
+PREFIX fml: <https://fairmodels.org/ontology.owl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?inputFeature ?inputFeatureName ?operationType ?beta
+WHERE {
+    <${modelUri}> rdf:type fml:Logistic_Regression;
+        fml:contains_algorithm ?linearPredictor.
+    
+    ?linearPredictor fml:contains_operation [
+        rdf:type fml:Addition;
+        ?operationValue [
+            rdf:type ?operationType;
+            fml:Primary_operation_value_reference ?inputFeature;
+            fml:secondary_operation_value ?beta;
+        ];
+    ].
+    
+    ?inputFeature fml:model_parameter_name ?inputFeatureName.
+}
