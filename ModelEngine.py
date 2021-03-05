@@ -10,11 +10,20 @@ class LogisticRegression:
     def __init__(self, modelUri, modelEngine):
         self.__modelEngine = modelEngine
         self.__modelUri = modelUri
-    def executeModel(self):
+    def executeModel(self, inputValues=None):
         modelParameters = self.getModelParameters()
-        print(modelParameters)
+        if inputValues is not None:
+            lp = self.calculateLinearPredictor(modelParameters, inputValues)
+            print(lp)
+    def calculateLinearPredictor(self, modelParameters, inputValues):
+        lp = float(0)
+        for parameterId in modelParameters:
+            parameter = modelParameters[parameterId]
+            weightedVar = parameter["beta"] * inputValues[parameterId]
+            lp = lp + weightedVar
+        return lp
     def getModelParameters(self):
-        queryResults = self.__modelEngine.performQueryFromFile(queryName="linearParams", mappings={"modelUri": self.__modelUri})
+        queryResults = self.__modelEngine.performQueryFromFile("linearParams", mappings={"modelUri": self.__modelUri})
         output = dict()
         for row in queryResults:
             output[str(row["inputFeature"])] = {
