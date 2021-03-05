@@ -13,9 +13,11 @@ class LogisticRegression:
     def executeModel(self, inputValues=None):
         modelParameters = self.getModelParameters()
         if inputValues is not None:
-            lp = self.calculateLinearPredictor(modelParameters, inputValues)
+            intercept = self.getInterceptParameter()
+            weightedSum = self.calculateWeightedSum(modelParameters, inputValues)
+            lp = intercept + weightedSum
             print(lp)
-    def calculateLinearPredictor(self, modelParameters, inputValues):
+    def calculateWeightedSum(self, modelParameters, inputValues):
         lp = float(0)
         for parameterId in modelParameters:
             parameter = modelParameters[parameterId]
@@ -31,6 +33,10 @@ class LogisticRegression:
                 "beta": float(str(row["beta"]))
             }
         return output
+    def getInterceptParameter(self):
+        queryResults = self.__modelEngine.performQueryFromFile("intercept", mappings={"modelUri": self.__modelUri})
+        for row in queryResults:
+            return float(str(row["intercept"]))
 
 class ModelEngine:
     def __init__(self, modelUri):
