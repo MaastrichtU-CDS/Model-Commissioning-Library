@@ -1,6 +1,7 @@
 import rdflib
 import os
 from string import Template
+import math
 
 class FML:
     prefix = "https://fairmodels.org/ontology.owl#"
@@ -10,13 +11,14 @@ class LogisticRegression:
     def __init__(self, modelUri, modelEngine):
         self.__modelEngine = modelEngine
         self.__modelUri = modelUri
-    def executeModel(self, inputValues=None):
+    def executeModel(self, inputValues):
         modelParameters = self.getModelParameters()
         if inputValues is not None:
             intercept = self.getInterceptParameter()
             weightedSum = self.calculateWeightedSum(modelParameters, inputValues)
             lp = intercept + weightedSum
-            print(lp)
+            probability = 1 / (1 + math.exp(-1 * lp))
+            return probability
     def calculateWeightedSum(self, modelParameters, inputValues):
         lp = float(0)
         for parameterId in modelParameters:
