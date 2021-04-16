@@ -50,6 +50,7 @@ class LogisticRegression:
             lp = lp + weightedVar
         return lp
     def __getModelParameters(self):
+        if self.__modelParameters is None:
         queryResults = self.__modelEngine.performQueryFromFile("linearParams", mappings={"modelUri": self.__modelUri})
         output = dict()
         for row in queryResults:
@@ -57,7 +58,8 @@ class LogisticRegression:
                 "featureName": str(row["inputFeatureName"]),
                 "beta": float(str(row["beta"]))
             }
-        return output
+            self.__modelParameters = output
+        return self.__modelParameters
     def __getInterceptParameter(self):
         queryResults = self.__modelEngine.performQueryFromFile("intercept", mappings={"modelUri": self.__modelUri})
         for row in queryResults:
