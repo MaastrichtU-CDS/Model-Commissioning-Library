@@ -51,13 +51,13 @@ class LogisticRegression:
         return lp
     def __getModelParameters(self):
         if self.__modelParameters is None:
-        queryResults = self.__modelEngine.performQueryFromFile("linearParams", mappings={"modelUri": self.__modelUri})
-        output = dict()
-        for row in queryResults:
-            output[str(row["inputFeature"])] = {
-                "featureName": str(row["inputFeatureName"]),
-                "beta": float(str(row["beta"]))
-            }
+            queryResults = self.__modelEngine.performQueryFromFile("linearParams", mappings={"modelUri": self.__modelUri})
+            output = dict()
+            for row in queryResults:
+                output[str(row["inputFeature"])] = {
+                    "featureName": str(row["inputFeatureName"]),
+                    "beta": float(str(row["beta"]))
+                }
             self.__modelParameters = output
         return self.__modelParameters
     def __getInterceptParameter(self):
@@ -69,8 +69,6 @@ class ModelEngine:
     def __init__(self, modelUri):
         self.__graph = rdflib.Graph()
         self.__graph.parse(modelUri, format=rdflib.util.guess_format(modelUri))
-    def test(self):
-        print("hi there!")
     def __getSparqlQueryFromFile(self, queryName, mappings=None):
         query = ""
         with open(os.path.join("queries", queryName + ".sparql")) as f:
