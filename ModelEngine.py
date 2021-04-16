@@ -11,6 +11,29 @@ class LogisticRegression:
     def __init__(self, modelUri, modelEngine):
         self.__modelEngine = modelEngine
         self.__modelUri = modelUri
+        self.__modelParameters = None
+    def executeModelOnDataFrame(self, cohortDataFrame):
+        modelParameters = self.__getModelParameters()
+
+        reverseIndex = {}
+        keyValue = {}
+        for key in modelParameters:
+            parameter = modelParameters[key]
+
+            if parameter["featureName"] not in cohortDataFrame.columns:
+                raise NameError("Could not find column %s" % parameter["featureName"])
+            reverseIndex[parameter["featureName"]] = key
+            keyValue[key] = parameter["featureName"]
+
+        myDf = cohortDataFrame.rename(columns=reverseIndex)
+        myDf["probability"] = None
+
+        for index, row in myDf.iterrows():
+            # convert short column name to long version
+            myDf.at[index, "probability"] = self.executeModel(row)
+        
+        cohortDataFrame = myDf.rename(columns=keyValue)
+        return cohortDataFrame
     def executeModel(self, inputValues):
         modelParameters = self.__getModelParameters()
         if inputValues is not None:

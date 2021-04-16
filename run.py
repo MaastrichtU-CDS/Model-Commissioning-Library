@@ -11,8 +11,10 @@ probability = modelExecutor.executeModel(inputValues={
 print(probability)
 
 inputData = pd.DataFrame(data={
-    "identifier": [1, 2, 3, 4, 5],
+    "identifier": [1, 2, 3, 4,],
     "cT": [3, 2, 3, 4],
     "cN": [1, 0, 2, 1],
     "tLength": [15, 4, 7, 10] 
 })
+
+print(modelExecutor.executeModelOnDataFrame(inputData))
