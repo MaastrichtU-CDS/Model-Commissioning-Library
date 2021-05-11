@@ -31,8 +31,10 @@ class LogisticRegression:
 
         for index, row in myDf.iterrows():
             # convert short column name to long version
-            myDf.at[index, "probability"] = self.executeModel(row)
-        
+            try:
+                myDf.at[index, "probability"] = self.executeModel(row)
+            except Exception as ex:
+                print(ex)
         cohortDataFrame = myDf.rename(columns=keyValue)
         return cohortDataFrame
     def executeModel(self, inputValues):
