@@ -46,8 +46,9 @@ class LogisticRegression:
     def __calculateWeightedSum(self, modelParameters, inputValues):
         lp = float(0)
         for parameterId in modelParameters:
+            inputValue = self.__replaceParameterToLocalValue(parameterId, inputValues[parameterId])
             parameter = modelParameters[parameterId]
-            weightedVar = parameter["beta"] * inputValues[parameterId]
+            weightedVar = parameter["beta"] * inputValue
             lp = lp + weightedVar
         return lp
     def __replaceParameterToLocalValue(self, parameterId, inputValue):
