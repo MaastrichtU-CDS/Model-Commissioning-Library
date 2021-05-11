@@ -68,6 +68,7 @@ cohort = qEngine.query_from_file("testQuery.sparql")
 print(cohort)
 cohort = modelExecutor.executeModelOnDataFrame(cohort)
 
+# Check of unknown probabilities
 is_NaN = cohort.isnull()
 row_has_NaN = is_NaN.any(axis=1)
 print(cohort[row_has_NaN])
