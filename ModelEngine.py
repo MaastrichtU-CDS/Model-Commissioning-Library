@@ -12,6 +12,7 @@ class LogisticRegression:
         self.__modelEngine = modelEngine
         self.__modelUri = modelUri
         self.__modelParameters = None
+        self.__parameterValueForTermLists = None
     def executeModelOnDataFrame(self, cohortDataFrame):
         modelParameters = self.__getModelParameters()
 
@@ -60,6 +61,36 @@ class LogisticRegression:
                 }
             self.__modelParameters = output
         return self.__modelParameters
+    def __getValueForTermList(self, modelParameter):
+        ## does a lookup on the translation values for a given model parameter
+        if self.__parameterValueForTermLists is None:
+            self.__parameterValueForTermLists = {}
+            queryResults = self.__modelEngine.performQueryFromFile("valueForTermList", mappings={"modelParameter": modelParameter})
+            for row in queryResults:
+                inputFeatureName = str(row["inputFeature"])
+                termName = str(row["term"])
+                termValue = row["value"]
+
+                # Replace termValue types
+                termValueNew = str(termValue)
+                termValueType = str(termValue.datatype)
+                if termValueType=="http://www.w3.org/2001/XMLSchema#int":
+                    termValueNew = int(str(termValue))
+                if termValueType=="http://www.w3.org/2001/XMLSchema#integer":
+                    termValueNew = int(str(termValue))
+                if termValueType=="http://www.w3.org/2001/XMLSchema#double":
+                    termValueNew = float(str(termValue))
+                termValue = termValueNew
+
+                # insert termValues in list
+                if inputFeatureName not in self.__parameterValueForTermLists:
+                    self.__parameterValueForTermLists[inputFeatureName] = {}
+                self.__parameterValueForTermLists[inputFeatureName][termName] = termValue
+        
+        if modelParameter in self.__parameterValueForTermLists:
+            return self.__parameterValueForTermLists[modelParameter]
+        else:
+            return None
     def __getInterceptParameter(self):
         queryResults = self.__modelEngine.performQueryFromFile("intercept", mappings={"modelUri": self.__modelUri})
         for row in queryResults:
