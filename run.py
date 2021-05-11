@@ -2,8 +2,14 @@ from ModelEngine import ModelEngine
 from QueryEngine import QueryEngine
 import pandas as pd
 
+# Load ModelEngine based on FAIR description
 modelEngine = ModelEngine("https://fairmodels.org/models/radiotherapy/stiphout_2011.ttl")
+# Get ModelExecutor object for FAIR model description
 modelExecutor = modelEngine.getModelExecutor()
+
+##########################################################
+# One execution with local values
+##########################################################
 probability = modelExecutor.executeModel(inputValues={
     "https://fairmodels.org/models/radiotherapy/#InputFeature_cTStage": 3,
     "https://fairmodels.org/models/radiotherapy/#InputFeature_cNStage": 1,
@@ -11,13 +17,19 @@ probability = modelExecutor.executeModel(inputValues={
 })
 print(probability)
 
+##########################################################
+# One execution with ontology term
+##########################################################
 probability = modelExecutor.executeModel(inputValues={
     "https://fairmodels.org/models/radiotherapy/#InputFeature_cTStage": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C48728",
-    "https://fairmodels.org/models/radiotherapy/#InputFeature_cNStage": 1,
+    "https://fairmodels.org/models/radiotherapy/#InputFeature_cNStage": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C48706",
     "https://fairmodels.org/models/radiotherapy/#InputFeature_TLength": 15
 })
 print(probability)
 
+##########################################################
+# DataFrame with local values
+##########################################################
 inputData = pd.DataFrame(data={
     "identifier": [1, 2, 3, 4,],
     "cT": [3, 2, 3, 4],
@@ -26,6 +38,9 @@ inputData = pd.DataFrame(data={
 })
 print(modelExecutor.executeModelOnDataFrame(inputData))
 
+##########################################################
+# DataFrame with ontology terms
+##########################################################
 inputData = pd.DataFrame(data={
     "identifier": [1, 2, 3, 4,],
     "cT": [
@@ -43,6 +58,10 @@ inputData = pd.DataFrame(data={
     "tLength": [15, 4, 7, 10] 
 })
 print(modelExecutor.executeModelOnDataFrame(inputData))
+
+##########################################################
+# Query against SPARQL endpoint
+##########################################################
 
 qEngine = QueryEngine("http://as-fair-01.ad.maastro.nl/repositories/sage")
 cohort = qEngine.query_from_file("testQuery.sparql")
