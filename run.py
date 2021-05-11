@@ -33,7 +33,12 @@ inputData = pd.DataFrame(data={
         "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C48728", 
         "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C48732"
     ],
-    "cN": [1, 0, 2, 1],
+    "cN": [
+        "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C48706",
+        "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C48705",
+        "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C48786",
+        "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C48706"
+    ],
     "tLength": [15, 4, 7, 10] 
 })
 print(modelExecutor.executeModelOnDataFrame(inputData))
