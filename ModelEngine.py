@@ -50,6 +50,12 @@ class LogisticRegression:
             weightedVar = parameter["beta"] * inputValues[parameterId]
             lp = lp + weightedVar
         return lp
+    def __replaceParameterToLocalValue(self, parameterId, inputValue):
+        paramMapping = self.__getValueForTermList(parameterId)
+        if paramMapping is not None:
+            if inputValue in paramMapping:
+                inputValue = paramMapping[inputValue]
+        return inputValue
     def __getModelParameters(self):
         if self.__modelParameters is None:
             queryResults = self.__modelEngine.performQueryFromFile("linearParams", mappings={"modelUri": self.__modelUri})
