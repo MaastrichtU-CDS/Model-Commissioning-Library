@@ -1,0 +1,19 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX db: <http://localhost/rdf/ontology/>
+PREFIX dbo: <http://um-cds/ontologies/databaseontology/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT ?patient ?cT ?cN ?tLength
+WHERE {
+    ?patient rdf:type db:Tumour_Treatment;
+        dbo:has_column [
+            rdf:type db:Tumour_Treatment.cT;
+            dbo:has_value ?cTval;
+        ];
+        dbo:has_column [
+            rdf:type db:Tumour_Treatment.cN;
+            dbo:has_value ?cNval;
+        ].
+    BIND ("5"^^xsd:integer AS ?tLength).
+    BIND (xsd:integer(?cTval) AS ?cT).
+    BIND (xsd:integer(?cNval) AS ?cN).
+}

@@ -1,4 +1,5 @@
 from ModelEngine import ModelEngine
+from QueryEngine import QueryEngine
 import pandas as pd
 
 modelEngine = ModelEngine("https://fairmodels.org/models/radiotherapy/stiphout_2011.ttl")
@@ -42,3 +43,12 @@ inputData = pd.DataFrame(data={
     "tLength": [15, 4, 7, 10] 
 })
 print(modelExecutor.executeModelOnDataFrame(inputData))
+
+qEngine = QueryEngine("http://as-fair-01.ad.maastro.nl/repositories/sage")
+cohort = qEngine.query_from_file("testQuery.sparql")
+print(cohort)
+cohort = modelExecutor.executeModelOnDataFrame(cohort)
+
+is_NaN = cohort.isnull()
+row_has_NaN = is_NaN.any(axis=1)
+print(cohort[row_has_NaN])
