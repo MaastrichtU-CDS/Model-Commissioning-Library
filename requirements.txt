@@ -1,1 +1,4 @@
 rdflib
+requests
+pandas
+SPARQLWrapper
