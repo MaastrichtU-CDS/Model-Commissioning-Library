@@ -7,10 +7,14 @@ class FML:
     prefix = "https://fairmodels.org/ontology.owl#"
     logisticRegression = prefix + "Logistic_Regression"
 
-class LogisticRegression:
+class ModelExecutor:
     def __init__(self, modelUri, modelEngine):
-        self.__modelEngine = modelEngine
-        self.__modelUri = modelUri
+        self.modelEngine = modelEngine
+        self.modelUri = modelUri
+
+class LogisticRegression(ModelExecutor):
+    def __init__(self, modelUri, modelEngine):
+        super().__init__(modelUri, modelEngine)
         self.__modelParameters = None
         self.__parameterValueForTermLists = None
     def executeModelOnDataFrame(self, cohortDataFrame):
@@ -61,7 +65,7 @@ class LogisticRegression:
         return inputValue
     def __getModelParameters(self):
         if self.__modelParameters is None:
-            queryResults = self.__modelEngine.performQueryFromFile("linearParams", mappings={"modelUri": self.__modelUri})
+            queryResults = self.modelEngine.performQueryFromFile("linearParams", mappings={"modelUri": self.modelUri})
             output = dict()
             for row in queryResults:
                 output[str(row["inputFeature"])] = {
@@ -74,7 +78,7 @@ class LogisticRegression:
         ## does a lookup on the translation values for a given model parameter
         if self.__parameterValueForTermLists is None:
             self.__parameterValueForTermLists = {}
-            queryResults = self.__modelEngine.performQueryFromFile("valueForTermList", mappings={"modelParameter": modelParameter})
+            queryResults = self.modelEngine.performQueryFromFile("valueForTermList", mappings={"modelParameter": modelParameter})
             for row in queryResults:
                 inputFeatureName = str(row["inputFeature"])
                 termName = str(row["term"])
@@ -101,7 +105,7 @@ class LogisticRegression:
         else:
             return None
     def __getInterceptParameter(self):
-        queryResults = self.__modelEngine.performQueryFromFile("intercept", mappings={"modelUri": self.__modelUri})
+        queryResults = self.modelEngine.performQueryFromFile("intercept", mappings={"modelUri": self.modelUri})
         for row in queryResults:
             return float(str(row["intercept"]))
 
