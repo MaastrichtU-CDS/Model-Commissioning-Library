@@ -2,9 +2,13 @@ PREFIX fml: <https://fairmodels.org/ontology.owl#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT ?algorithm ?algorithmType
+SELECT ?algorithm ?algorithmType ?algorithmExecutionType
 WHERE {
     ?model rdf:type fml:Model.
     ?model fml:contains_algorithm ?algorithm.
-    ?algorithm rdf:type ?algorithmType.
+    
+    ?algorithm rdf:type ?algorithmType;
+        fml:contains_algorithm [
+            rdf:type ?algorithmExecutionType;
+        ].
 }
