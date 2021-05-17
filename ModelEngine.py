@@ -6,19 +6,77 @@ import math
 class FML:
     prefix = "https://fairmodels.org/ontology.owl#"
     logisticRegression = prefix + "Logistic_Regression"
+    linearPredictor = prefix + "linear_predictor"
+    dockerExecution = prefix + "docker_execution"
 
 class ModelExecutor:
     def __init__(self, modelUri, modelEngine):
         self.modelEngine = modelEngine
         self.modelUri = modelUri
+        self.modelParameters = None
+        self.parameterValueForTermLists = None
 
-class LogisticRegression(ModelExecutor):
-    def __init__(self, modelUri, modelEngine):
-        super().__init__(modelUri, modelEngine)
-        self.__modelParameters = None
-        self.__parameterValueForTermLists = None
     def executeModelOnDataFrame(self, cohortDataFrame):
-        modelParameters = self.__getModelParameters()
+        return cohortDataFrame
+
+    def executeModel(self, inputValues):
+        return None
+
+    def getModelParameters(self):
+        if self.modelParameters is None:
+            queryResults = self.modelEngine.performQueryFromFile("linearParams", mappings={"modelUri": self.modelUri})
+            output = dict()
+            for row in queryResults:
+                output[str(row["inputFeature"])] = {
+                    "featureName": str(row["inputFeatureName"]),
+                    "beta": float(str(row["beta"]))
+                }
+            self.modelParameters = output
+        return self.modelParameters
+    def replaceParameterToLocalValue(self, parameterId, inputValue):
+        paramMapping = self.getValueForTermList(parameterId)
+        if paramMapping is not None:
+            if inputValue in paramMapping:
+                inputValue = paramMapping[inputValue]
+        return inputValue
+    def getValueForTermList(self, modelParameter):
+        ## does a lookup on the translation values for a given model parameter
+        if self.parameterValueForTermLists is None:
+            self.parameterValueForTermLists = {}
+            queryResults = self.modelEngine.performQueryFromFile("valueForTermList", mappings={"modelParameter": modelParameter})
+            for row in queryResults:
+                inputFeatureName = str(row["inputFeature"])
+                termName = str(row["term"])
+                termValue = row["value"]
+
+                # Replace termValue types
+                termValueNew = str(termValue)
+                termValueType = str(termValue.datatype)
+                if termValueType=="http://www.w3.org/2001/XMLSchema#int":
+                    termValueNew = int(str(termValue))
+                if termValueType=="http://www.w3.org/2001/XMLSchema#integer":
+                    termValueNew = int(str(termValue))
+                if termValueType=="http://www.w3.org/2001/XMLSchema#double":
+                    termValueNew = float(str(termValue))
+                termValue = termValueNew
+
+                # insert termValues in list
+                if inputFeatureName not in self.parameterValueForTermLists:
+                    self.parameterValueForTermLists[inputFeatureName] = {}
+                self.parameterValueForTermLists[inputFeatureName][termName] = termValue
+        
+        if modelParameter in self.parameterValueForTermLists:
+            return self.parameterValueForTermLists[modelParameter]
+        else:
+            return None
+
+class DockerExecutor(ModelExecutor):
+    def executeModel(self, inputValues):
+        return super().executeModel(inputValues)
+
+class LogisticRegression(ModelExecutor):        
+    def executeModelOnDataFrame(self, cohortDataFrame):
+        modelParameters = self.getModelParameters()
 
         reverseIndex = {}
         keyValue = {}
@@ -42,7 +100,7 @@ class LogisticRegression(ModelExecutor):
         cohortDataFrame = myDf.rename(columns=keyValue)
         return cohortDataFrame
     def executeModel(self, inputValues):
-        modelParameters = self.__getModelParameters()
+        modelParameters = self.getModelParameters()
         if inputValues is not None:
             intercept = self.__getInterceptParameter()
             weightedSum = self.__calculateWeightedSum(modelParameters, inputValues)
@@ -52,58 +110,11 @@ class LogisticRegression(ModelExecutor):
     def __calculateWeightedSum(self, modelParameters, inputValues):
         lp = float(0)
         for parameterId in modelParameters:
-            inputValue = self.__replaceParameterToLocalValue(parameterId, inputValues[parameterId])
+            inputValue = self.replaceParameterToLocalValue(parameterId, inputValues[parameterId])
             parameter = modelParameters[parameterId]
             weightedVar = parameter["beta"] * inputValue
             lp = lp + weightedVar
         return lp
-    def __replaceParameterToLocalValue(self, parameterId, inputValue):
-        paramMapping = self.__getValueForTermList(parameterId)
-        if paramMapping is not None:
-            if inputValue in paramMapping:
-                inputValue = paramMapping[inputValue]
-        return inputValue
-    def __getModelParameters(self):
-        if self.__modelParameters is None:
-            queryResults = self.modelEngine.performQueryFromFile("linearParams", mappings={"modelUri": self.modelUri})
-            output = dict()
-            for row in queryResults:
-                output[str(row["inputFeature"])] = {
-                    "featureName": str(row["inputFeatureName"]),
-                    "beta": float(str(row["beta"]))
-                }
-            self.__modelParameters = output
-        return self.__modelParameters
-    def __getValueForTermList(self, modelParameter):
-        ## does a lookup on the translation values for a given model parameter
-        if self.__parameterValueForTermLists is None:
-            self.__parameterValueForTermLists = {}
-            queryResults = self.modelEngine.performQueryFromFile("valueForTermList", mappings={"modelParameter": modelParameter})
-            for row in queryResults:
-                inputFeatureName = str(row["inputFeature"])
-                termName = str(row["term"])
-                termValue = row["value"]
-
-                # Replace termValue types
-                termValueNew = str(termValue)
-                termValueType = str(termValue.datatype)
-                if termValueType=="http://www.w3.org/2001/XMLSchema#int":
-                    termValueNew = int(str(termValue))
-                if termValueType=="http://www.w3.org/2001/XMLSchema#integer":
-                    termValueNew = int(str(termValue))
-                if termValueType=="http://www.w3.org/2001/XMLSchema#double":
-                    termValueNew = float(str(termValue))
-                termValue = termValueNew
-
-                # insert termValues in list
-                if inputFeatureName not in self.__parameterValueForTermLists:
-                    self.__parameterValueForTermLists[inputFeatureName] = {}
-                self.__parameterValueForTermLists[inputFeatureName][termName] = termValue
-        
-        if modelParameter in self.__parameterValueForTermLists:
-            return self.__parameterValueForTermLists[modelParameter]
-        else:
-            return None
     def __getInterceptParameter(self):
         queryResults = self.modelEngine.performQueryFromFile("intercept", mappings={"modelUri": self.modelUri})
         for row in queryResults:
@@ -131,8 +142,14 @@ class ModelEngine:
         
         for resultRow in queryResults:
             algorithmTypeString = str(resultRow["algorithmType"])
+            algorithmExecutionTypeString = str(resultRow["algorithmExecutionType"])
 
             if FML.logisticRegression == algorithmTypeString:
-                return LogisticRegression(str(resultRow["algorithm"]), self)
+                if FML.linearPredictor == algorithmExecutionTypeString:
+                    return LogisticRegression(str(resultRow["algorithm"]), self)
+            
+            if FML.dockerExecution == algorithmExecutionTypeString:
+                print("Unknown algorithm type, but it is definately a docker-based execution")
+                return DockerExecutor(str(resultRow["algorithm"]), self)
         
         return None
