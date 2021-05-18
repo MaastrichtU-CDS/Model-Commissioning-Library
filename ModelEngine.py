@@ -184,6 +184,9 @@ class LogisticRegression(ModelExecutor):
             return float(str(row["intercept"]))
 
 class ModelEngine:
+    """
+    Base class to fetch model specifications, and select the execution type of the model.
+    """
     def __init__(self, modelUri):
         self.__graph = rdflib.Graph()
         self.__graph.parse(modelUri, format=rdflib.util.guess_format(modelUri))
@@ -201,6 +204,10 @@ class ModelEngine:
         return self.__graph.query(query)
     
     def getModelExecutor(self):
+        """
+        Determines the ModelExecutor subclass, based on algorithm and execution type.
+        Return value: Instance of ModelExecutor, based on the execution type. If no supported type is found, None will be returned.
+        """
         queryResults = self.performQueryFromFile("modelType")
         
         for resultRow in queryResults:
