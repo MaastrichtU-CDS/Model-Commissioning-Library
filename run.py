@@ -3,7 +3,7 @@ from QueryEngine import QueryEngine
 import pandas as pd
 
 # Load ModelEngine based on FAIR description
-modelEngine = ModelEngine("https://fairmodels.org/models/radiotherapy/stiphout_2011.ttl")
+modelEngine = ModelEngine("stiphout_docker_2011.ttl")
 # Get ModelExecutor object for FAIR model description
 modelExecutor = modelEngine.getModelExecutor()
 
