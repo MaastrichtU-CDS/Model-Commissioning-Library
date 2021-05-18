@@ -43,6 +43,7 @@ model:docker_executor rdf:type fml:docker_execution;
     fml:image_url "jvsoest/stiphout_2011";
     fml:container_port "5000";
     fml:invocation_url "/";
+    fml:invocation_url_bulk "/bulk";
     fml:http_method "post";
     fml:accept_type "application/json".
 

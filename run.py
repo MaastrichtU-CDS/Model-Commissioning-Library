@@ -67,6 +67,7 @@ qEngine = QueryEngine("http://as-fair-01.ad.maastro.nl/repositories/sage")
 cohort = qEngine.query_from_file("testQuery.sparql")
 print(cohort)
 cohort = modelExecutor.executeModelOnDataFrame(cohort)
+print(cohort.head())
 
 # Check of unknown probabilities
 is_NaN = cohort.isnull()

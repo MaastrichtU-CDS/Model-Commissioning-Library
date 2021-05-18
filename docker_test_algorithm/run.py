@@ -3,6 +3,7 @@ import json
 import signal
 import math
 import sys
+import pandas as pd
 
 app = Flask('TaskMaster')
 
@@ -23,9 +24,14 @@ def calculate_single():
     except:
         return Response(json.dumps({"success": False, 'message': "Could not parse input as JSON"}), mimetype="application/json")
     
-    cT_value = int(data["cT"])
-    cN_value = int(data["cN"])
-    tLength_value = int(data["tLength"])
+    probability = calculate(data)
+    
+    return json.dumps({"success": True, "probability": probability})
+
+def calculate(data):
+    cT_value = int(data["https://fairmodels.org/models/radiotherapy/#InputFeature_cTStage"])
+    cN_value = int(data["https://fairmodels.org/models/radiotherapy/#InputFeature_cNStage"])
+    tLength_value = int(data["https://fairmodels.org/models/radiotherapy/#InputFeature_TLength"])
     
     intercept = float("-0.60")
     cT_beta = float("-0.074")
@@ -34,6 +40,22 @@ def calculate_single():
 
     linearPredictor = intercept + (cT_value * cT_beta) + (cN_value * cN_beta) + (tLength_value * tLength_beta)
     probability = 1 / (1 + math.exp(-1 * linearPredictor))
-    return json.dumps({"success": True, "probability": probability})
+    return probability
+
+@app.route('/bulk', methods=["POST"])
+def calculate_bulk():
+    try:
+        data = request.get_json()
+    except:
+        return Response(json.dumps({"success": False, 'message': "Could not parse input as JSON"}), mimetype="application/json")
+    
+    myDf = pd.read_json(data)
+    for index, row in myDf.iterrows():
+            # convert short column name to long version
+            try:
+                myDf.at[index, "probability"] = calculate(row)
+            except Exception as ex:
+                print(ex)
+    return json.dumps(myDf.to_json())
 
 app.run(debug=True, host='0.0.0.0', port=5000)

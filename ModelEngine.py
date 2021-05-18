@@ -4,6 +4,7 @@ from string import Template
 import math
 import docker
 import requests
+import pandas
 
 class FML:
     prefix = "https://fairmodels.org/ontology.owl#"
@@ -124,6 +125,7 @@ class DockerExecutor(ModelExecutor):
                 "imageUrl": row["imageUrl"],
                 "containerPort": row["containerPort"],
                 "invocationUrl": row["invocationUrl"],
+                "invocationUrlBulk": row["invocationUrlBulk"],
                 "httpMethod": row["httpMethod"],
                 "acceptType": row["acceptType"]
             }
@@ -137,10 +139,13 @@ class DockerExecutor(ModelExecutor):
         modelParameters = self.getModelParameters()
         if inputValues is not None:
             try:
-                inputList = {}
                 for parameterId in modelParameters:
-                    inputValue = self.replaceParameterToLocalValue(parameterId, inputValues[parameterId])
-                    inputList[modelParameters[parameterId]["featureName"]] = inputValue
+                    if parameterId in inputValues:
+                        inputValue = self.replaceParameterToLocalValue(parameterId, inputValues[parameterId])
+                        inputValues[parameterId] = inputValue
+                    elif modelParameters[parameterId]["featureName"] in inputValues:
+                        inputValue = self.replaceParameterToLocalValue(parameterId, inputValues[modelParameters[parameterId]["featureName"]])
+                        inputValues[parameterId] = inputValue
 
                 modelUrl = "http://localhost:5000" + self.__dockerParams["invocationUrl"]
                 requestFunction = None
@@ -150,14 +155,55 @@ class DockerExecutor(ModelExecutor):
                     print("Only HTTP POST is currently supported in this client engine.")
                     return None
                 
-                response = requestFunction(modelUrl, json=inputList).json()
+                print(inputValues)
+                response = requestFunction(modelUrl, json=inputValues).json()
                 if "probability" in response:
                     return response["probability"]
             except Exception as error:
                 print("Could not execute model: " + str(error))
             return None
     
+    def executeModelOnDataFrame(self, cohortDataFrame):
+        """
+        Execute prediction model on a given Pandas DataFrame object. This function loops over every row in the DataFrame object, and calls the executeModel function.
+        More elegant options are possible, however should be handled by classes inheriting the current ModelExecutor.
+        """
+        modelParameters = self.getModelParameters()
+
+        reverseIndex = {}
+        keyValue = {}
+        for key in modelParameters:
+            parameter = modelParameters[key]
+
+            if parameter["featureName"] not in cohortDataFrame.columns:
+                raise NameError("Could not find column %s" % parameter["featureName"])
+            reverseIndex[parameter["featureName"]] = key
+            keyValue[key] = parameter["featureName"]
+
+        cohortDataFrame = cohortDataFrame.rename(columns=reverseIndex)
+        for key in modelParameters:
+            paramMapping = self.getValueForTermList(key)
+            if paramMapping is not None:
+                for paramKey in paramMapping:
+                    cohortDataFrame[key] = cohortDataFrame[key].replace(paramKey, paramMapping[paramKey])
+        cohortDataFrame["probability"] = None
+
+        modelUrl = "http://localhost:5000" + self.__dockerParams["invocationUrlBulk"]
+        requestFunction = None
+        if self.__dockerParams["httpMethod"].upper() == "POST":
+            requestFunction = requests.post
+        else:
+            print("Only HTTP POST is currently supported in this client engine.")
+            return None
+
+        response = requestFunction(modelUrl, json=cohortDataFrame.to_json()).json()
+        cohortDataFrame = pandas.read_json(response)
+        
+        cohortDataFrame = cohortDataFrame.rename(columns=keyValue)
+        return cohortDataFrame
+
     def __del__(self):
+        print("Stopping container")
         self.__algorithmContainer.stop()
         self.__algorithmContainer.remove()
 
