@@ -2,3 +2,4 @@ rdflib
 requests
 pandas
 SPARQLWrapper
+docker

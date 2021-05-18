@@ -2,6 +2,8 @@ import rdflib
 import os
 from string import Template
 import math
+import docker
+import requests
 
 class FML:
     prefix = "https://fairmodels.org/ontology.owl#"
@@ -29,8 +31,10 @@ class ModelExecutor:
             for row in queryResults:
                 output[str(row["inputFeature"])] = {
                     "featureName": str(row["inputFeatureName"]),
-                    "beta": float(str(row["beta"]))
+                    "beta": row["beta"]
                 }
+                if row["beta"] is not None:
+                    output[str(row["inputFeature"])]["beta"] = float(str(row["beta"]))
             self.modelParameters = output
         return self.modelParameters
     def replaceParameterToLocalValue(self, parameterId, inputValue):
@@ -71,8 +75,61 @@ class ModelExecutor:
             return None
 
 class DockerExecutor(ModelExecutor):
+    """
+    This class handles the execution of docker containers, as specified in the FairModels.org ontology.
+    At instance creation, the docker container will be started (and bound to localhost). At teardown, the container will be stopped and removed.
+    The main function for invocation is executeModel.
+    """
+
+    def __init__(self, modelUri, modelEngine):
+        super().__init__(modelUri, modelEngine)
+        self.__client = docker.from_env()
+        self.__fetchDockerParams()
+        try:
+            self.__client.images.pull(self.__dockerParams["imageUrl"])
+        except:
+            print("Could not fetch image " + self.__dockerParams["imageUrl"])
+        self.__algorithmContainer = self.__client.containers.run(self.__dockerParams["imageUrl"], detach=True, ports={self.__dockerParams["containerPort"] + '/tcp': ('127.0.0.1', 5000)})
+
+    def __fetchDockerParams(self):
+        queryResults = self.modelEngine.performQueryFromFile("dockerParams", mappings={"modelUri": self.modelUri})
+        for row in queryResults:
+            self.__dockerParams = {
+                "imageUrl": row["imageUrl"],
+                "containerPort": row["containerPort"],
+                "invocationUrl": row["invocationUrl"],
+                "httpMethod": row["httpMethod"],
+                "acceptType": row["acceptType"]
+            }
+            break
+    
     def executeModel(self, inputValues):
-        return super().executeModel(inputValues)
+        modelParameters = self.getModelParameters()
+        if inputValues is not None:
+            try:
+                inputList = {}
+                for parameterId in modelParameters:
+                    inputValue = self.replaceParameterToLocalValue(parameterId, inputValues[parameterId])
+                    inputList[modelParameters[parameterId]["featureName"]] = inputValue
+
+                modelUrl = "http://localhost:5000" + self.__dockerParams["invocationUrl"]
+                requestFunction = None
+                if self.__dockerParams["httpMethod"].upper() == "POST":
+                    requestFunction = requests.post
+                else:
+                    print("Only HTTP POST is currently supported in this client engine.")
+                    return None
+                
+                response = requestFunction(modelUrl, json=inputList).json()
+                if "probability" in response:
+                    return response["probability"]
+            except Exception as error:
+                print("Could not execute model: " + str(error))
+            return None
+
+    def __del__(self):
+        self.__algorithmContainer.stop()
+        self.__algorithmContainer.remove()
 
 class LogisticRegression(ModelExecutor):        
     def executeModelOnDataFrame(self, cohortDataFrame):
