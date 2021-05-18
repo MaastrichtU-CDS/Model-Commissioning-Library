@@ -19,6 +19,32 @@ class ModelExecutor:
         self.parameterValueForTermLists = None
 
     def executeModelOnDataFrame(self, cohortDataFrame):
+        """
+        Execute prediction model on a given Pandas DataFrame object. This function loops over every row in the DataFrame object, and calls the executeModel function.
+        More elegant options are possible, however should be handled by classes inheriting the current ModelExecutor.
+        """
+        modelParameters = self.getModelParameters()
+
+        reverseIndex = {}
+        keyValue = {}
+        for key in modelParameters:
+            parameter = modelParameters[key]
+
+            if parameter["featureName"] not in cohortDataFrame.columns:
+                raise NameError("Could not find column %s" % parameter["featureName"])
+            reverseIndex[parameter["featureName"]] = key
+            keyValue[key] = parameter["featureName"]
+
+        myDf = cohortDataFrame.rename(columns=reverseIndex)
+        myDf["probability"] = None
+
+        for index, row in myDf.iterrows():
+            # convert short column name to long version
+            try:
+                myDf.at[index, "probability"] = self.executeModel(row)
+            except Exception as ex:
+                print(ex)
+        cohortDataFrame = myDf.rename(columns=keyValue)
         return cohortDataFrame
 
     def executeModel(self, inputValues):
@@ -104,6 +130,10 @@ class DockerExecutor(ModelExecutor):
             break
     
     def executeModel(self, inputValues):
+        """
+        Execute the prediction model given the dictionary of input values.
+        Return value: Probability (float) or None when execution failed
+        """
         modelParameters = self.getModelParameters()
         if inputValues is not None:
             try:
@@ -126,36 +156,12 @@ class DockerExecutor(ModelExecutor):
             except Exception as error:
                 print("Could not execute model: " + str(error))
             return None
-
+    
     def __del__(self):
         self.__algorithmContainer.stop()
         self.__algorithmContainer.remove()
 
 class LogisticRegression(ModelExecutor):        
-    def executeModelOnDataFrame(self, cohortDataFrame):
-        modelParameters = self.getModelParameters()
-
-        reverseIndex = {}
-        keyValue = {}
-        for key in modelParameters:
-            parameter = modelParameters[key]
-
-            if parameter["featureName"] not in cohortDataFrame.columns:
-                raise NameError("Could not find column %s" % parameter["featureName"])
-            reverseIndex[parameter["featureName"]] = key
-            keyValue[key] = parameter["featureName"]
-
-        myDf = cohortDataFrame.rename(columns=reverseIndex)
-        myDf["probability"] = None
-
-        for index, row in myDf.iterrows():
-            # convert short column name to long version
-            try:
-                myDf.at[index, "probability"] = self.executeModel(row)
-            except Exception as ex:
-                print(ex)
-        cohortDataFrame = myDf.rename(columns=keyValue)
-        return cohortDataFrame
     def executeModel(self, inputValues):
         modelParameters = self.getModelParameters()
         if inputValues is not None:
