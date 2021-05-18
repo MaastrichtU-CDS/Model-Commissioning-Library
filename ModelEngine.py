@@ -155,7 +155,6 @@ class DockerExecutor(ModelExecutor):
                     print("Only HTTP POST is currently supported in this client engine.")
                     return None
                 
-                print(inputValues)
                 response = requestFunction(modelUrl, json=inputValues).json()
                 if "probability" in response:
                     return response["probability"]

@@ -1,3 +1,5 @@
+cd image/
+
 echo "Build image"
 docker build -t stiphout_model_image ./
 
@@ -16,7 +18,7 @@ echo "============================================="
 echo "Execute model"
 curl --header "Content-Type: application/json" \
   --request POST \
-  --data '{"cT": 3, "cN": 1, "tLength": 5}' \
+  --data '{"https://fairmodels.org/models/radiotherapy/#InputFeature_cTStage": 3, "https://fairmodels.org/models/radiotherapy/#InputFeature_cNStage": 1, "https://fairmodels.org/models/radiotherapy/#InputFeature_TLength": 5}' \
   http://localhost:5000/
 
 echo ""
