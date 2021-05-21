@@ -5,16 +5,20 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT ?inputFeature ?inputFeatureName ?operationType ?beta
 WHERE {
     <${modelUri}> rdf:type fml:Logistic_Regression;
-        fml:contains_algorithm ?linearPredictor.
+        fml:has_input_parameter ?inputFeature.
     
-    ?linearPredictor fml:contains_operation [
-        rdf:type fml:Addition;
-        ?operationValue [
-            rdf:type ?operationType;
-            fml:Primary_operation_value_reference ?inputFeature;
-            fml:secondary_operation_value ?beta;
-        ];
-    ].
+    OPTIONAL {
+        <${modelUri}> fml:contains_algorithm ?linearPredictor.
+        
+        ?linearPredictor fml:contains_operation [
+            rdf:type fml:Addition;
+            ?operationValue [
+                rdf:type ?operationType;
+                fml:Primary_operation_value_reference ?inputFeature;
+                fml:secondary_operation_value ?beta;
+            ];
+        ].
+    }
     
     ?inputFeature fml:model_parameter_name ?inputFeatureName.
 }

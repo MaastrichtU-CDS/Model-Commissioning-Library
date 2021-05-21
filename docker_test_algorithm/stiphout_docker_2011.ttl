@@ -1,0 +1,121 @@
+@prefix model: <https://fairmodels.org/models/radiotherapy/#>.
+@prefix fml: <https://fairmodels.org/ontology.owl#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix ncit: <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#>.
+@prefix roo: <http://www.cancerdata.org/roo/>.
+@prefix icd: <http://purl.bioontology.org/ontology/ICD10/>.
+@prefix uo: <http://purl.obolibrary.org/obo/UO_>.
+@prefix time: <http://www.w3.org/2006/time#>.
+
+model: rdf:type fml:Model;
+    rdfs:label "Rectal cancer pCR model by van Stiphout et al.";
+    fml:contains_algorithm model:stiphout_2011_clinical_algorithm;
+    fml:needs_information_element model:ctInformationElement;
+    fml:needs_information_element model:cnInformationElement;
+    fml:needs_information_element model:tLengthInformationElement;
+    fml:has_objective model:stiphout_2011_objective.
+
+model:category rdf:type fml:category.
+model:numeric rdf:type fml:numeric.
+
+model:ctInformationElement rdf:type fml:InformationElement;
+    rdf:type ncit:C48885;
+    fml:is_variable_type model:category.
+
+model:cnInformationElement rdf:type fml:InformationElement;
+    rdf:type ncit:C48884;
+    fml:is_variable_type model:category.
+
+model:tLengthInformationElement rdf:type fml:InformationElement;
+    rdf:type roo:C100074;
+    fml:is_variable_type model:numeric.
+
+model:stiphout_2011_clinical_algorithm rdf:type fml:Logistic_Regression;
+    fml:has_input_parameter model:InputFeature_TLength;
+    fml:has_input_parameter model:InputFeature_cTStage;
+    fml:has_input_parameter model:InputFeature_cNStage;
+    fml:has_output_parameter model:OutputFeature_ypT0N0;
+    fml:contains_algorithm model:docker_executor.
+
+model:docker_executor rdf:type fml:docker_execution;
+    fml:image_url "jvsoest/stiphout_2011";
+    fml:container_port "5000";
+    fml:invocation_url "/";
+    fml:invocation_url_bulk "/bulk";
+    fml:http_method "post";
+    fml:accept_type "application/json".
+
+model:InputFeature_TLength rdf:type fml:Algorithm_Input_Parameter;
+    fml:model_parameter_name "tLength";
+    fml:is_variable_type model:numeric;
+    fml:based_on_information_element model:tLengthInformationElement.
+
+model:InputFeature_cTStage rdf:type fml:Algorithm_Input_Parameter;
+    fml:model_parameter_name "cT";
+    fml:is_variable_type model:numeric;
+    fml:has_translation [
+        rdf:type fml:value_translation;
+        fml:source_object [ rdf:type ncit:C48719; ];
+        fml:target_value "0"^^xsd:integer;
+    ];
+    fml:has_translation [
+        rdf:type fml:value_translation;
+        fml:source_object [ rdf:type ncit:C48720; ];
+        fml:target_value "1"^^xsd:integer;
+    ];
+    fml:has_translation [
+        rdf:type fml:value_translation;
+        fml:source_object [ rdf:type ncit:C48724; ];
+        fml:target_value "2"^^xsd:integer;
+    ];
+    fml:has_translation [
+        rdf:type fml:value_translation;
+        fml:source_object [ rdf:type ncit:C48728; ];
+        fml:target_value "3"^^xsd:integer;
+    ];
+    fml:has_translation [
+        rdf:type fml:value_translation;
+        fml:source_object [ rdf:type ncit:C48732; ];
+        fml:target_value "4"^^xsd:integer;
+    ];
+    fml:based_on_information_element model:ctInformationElement.
+
+model:InputFeature_cNStage rdf:type fml:Algorithm_Input_Parameter;
+    fml:model_parameter_name "cN";
+    fml:is_variable_type model:numeric;
+    fml:has_translation [
+        rdf:type fml:value_translation;
+        fml:source_object [ rdf:type ncit:C48705; ];
+        fml:target_value "0"^^xsd:integer;
+    ];
+    fml:has_translation [
+        rdf:type fml:value_translation;
+        fml:source_object [ rdf:type ncit:C48706; ];
+        fml:target_value "1"^^xsd:integer;
+    ];
+    fml:has_translation [
+        rdf:type fml:value_translation;
+        fml:source_object [ rdf:type ncit:C48786; ];
+        fml:target_value "2"^^xsd:integer;
+    ];
+    fml:has_translation [
+        rdf:type fml:value_translation;
+        fml:source_object [ rdf:type ncit:C48714; ];
+        fml:target_value "3"^^xsd:integer;
+    ];
+    fml:based_on_information_element model:cnInformationElement.
+
+model:OutputFeature_ypT0N0 rdf:type fml:Probability;
+    rdfs:label "Probability of pathologic complete response";
+    fml:model_parameter_name "ypT0N0";
+    fml:probability_of model:pCR.
+
+model:stiphout_2011_objective rdf:type fml:Prediction;
+    rdfs:label "Pathologic complete response prediction";
+    fml:model_parameter_name "ypT0N0";
+    fml:prediction_of model:pCR;
+    fml:based_on_parameter model:OutputFeature_ypT0N0.
+
+model:pCR rdf:type ncit:C123603.
