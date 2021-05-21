@@ -1,0 +1,17 @@
+PREFIX fml: <https://fairmodels.org/ontology.owl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?imageUrl ?containerPort ?invocationUrl ?invocationUrlBulk ?httpMethod ?acceptType
+WHERE {
+    <${modelUri}> rdf:type ?modelType;
+        fml:contains_algorithm [
+            rdf:type fml:docker_execution;
+            fml:image_url ?imageUrl;
+            fml:container_port ?containerPort;
+            fml:invocation_url ?invocationUrl;
+            fml:invocation_url_bulk ?invocationUrlBulk;
+            fml:http_method ?httpMethod;
+            fml:accept_type ?acceptType;
+        ].
+}
