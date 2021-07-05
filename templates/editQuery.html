@@ -1,6 +1,8 @@
 <html>
     <head>
         <title>FAIR query engine</title>
+        <link href="https://unpkg.com/@triply/yasgui/build/yasgui.min.css" rel="stylesheet" type="text/css" />
+        <script src="https://unpkg.com/@triply/yasgui/build/yasgui.min.js"></script>
     </head>
 
     <body>
@@ -22,6 +24,21 @@
 
         <h3>Current query</h3>
         <p>The currently used query is:</p>
-        <textarea>{{ requestSpecs.query }}</textarea>
+        <form method=POST >
+            <textarea id="sparqlQuery" name="sparqlQuery">{{ queryToUse }}</textarea>
+            <br/>
+            <input type="submit" value="Save"/>
+        </form>
+
+        <div id="yasgui"></div>
+        <script>
+            const yasgui = new Yasgui(document.getElementById("yasgui"), {
+                yasqe: { sparql: { endpoint: "{{ dataEndpointUrl }}" }},
+                copyEndpointOnNewTab: true,
+            });
+            tab = yasgui.getTab()
+            tab.setQuery("{{ queryToUse }}")
+        </script>
+        <input type="button" value="Save" onclick="window.alert(yasgui.getTab().getQuery())" />
     </body>
 </html>
