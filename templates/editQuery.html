@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <title>FAIR query engine</title>
+    </head>
+
+    <body>
+        <h1>FAIR query engine</h1>
+        <h2>Edit query for model</h2>
+        <p>The model will need the following input variables:</p>
+        <table>
+            <tr>
+                <th>Variable name</th>
+                <th>Local parameter name</th>
+            </tr>
+            {% for modelParam in modelParamsList %}
+            <tr>
+                <td>{{modelParam.informationElementTypeLabel.value}}</td>
+                <td>{{modelParam.local_param_name.value}}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <h3>Current query</h3>
+        <p>The currently used query is:</p>
+        <textarea>{{ requestSpecs.query }}</textarea>
+    </body>
+</html>
