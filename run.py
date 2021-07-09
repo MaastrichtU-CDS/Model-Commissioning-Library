@@ -2,7 +2,7 @@ from flask import Flask, render_template, request
 from SPARQLWrapper import SPARQLWrapper, JSON, POST
 import json
 from QueryEngine import QueryEngine
-import urllib.parse
+import base64
 
 with open("config.json") as f:
     config = json.load(f)
@@ -53,10 +53,22 @@ class ValidationEndpoint:
             OPTIONAL { ?id fml:has_query ?query }.
         }
         """ % requestId
-        print(queryString)
-        return self.__defaultQueryAssignment(queryString)[0]
+        returnSet = self.__defaultQueryAssignment(queryString)[0]
+        if "query" in returnSet:
+            returnSet["query"]["value"] = self.__b64DecodeString(returnSet["query"]["value"])
+        return returnSet
+    def __b64EncodeString(self, message):
+        message_bytes = message.encode("utf8")
+        base64_bytes = base64.b64encode(message_bytes)
+        base64_message = base64_bytes.decode("utf8")
+        return base64_message
+    def __b64DecodeString(self, base64_message):
+        base64_bytes = base64_message.encode('utf8')
+        message_bytes = base64.b64decode(base64_bytes)
+        message = message_bytes.decode("utf8")
+        return message
     def storeQuery(self, requestId, query):
-        query = urllib.parse.quote(query)
+        query = self.__b64EncodeString(query)
         queryString = """
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         PREFIX fml: <https://fairmodels.org/ontology.owl#>
@@ -67,6 +79,7 @@ class ValidationEndpoint:
             BIND(<%s> AS ?id).
          }
         """ % (query, requestId)
+        print(queryString)
         self.__postQuery(queryString)
 class ModelEndpoint:
     def __init__(self, endpointUrl):
@@ -107,18 +120,19 @@ def index():
     if requestUri is not None:
         requestSpecs = validationEndpoint.getRequestSpecs(requestUri)
         modelParamsList = modelEndpoint.getModelInputParameters(requestSpecs["model"]["value"])
+        queryToUse = requestSpecs["query"]["value"]
         return render_template('editQuery.html',
             requestSpecs=requestSpecs,
             modelParamsList=modelParamsList,
-            queryToUse=urllib.parse.unquote(requestSpecs["query"]["value"]),
+            queryToUse=queryToUse,
             dataEndpointUrl=config["data_endpoint"]["url"])
 
     return render_template('index.html', vRequests=validationEndpoint.getOpenValidationRequests())
 
 @app.route('/', methods=["POST"])
 def submitQuery():
-    requestUri = request.args.get("requestUri")
-    sparqlQuery = request.form["sparqlQuery"]
+    requestUri = request.form.get("requestUri")
+    sparqlQuery = request.form.get("query")
     validationEndpoint.storeQuery(requestUri, sparqlQuery)
     return render_template('index.html', vRequests=validationEndpoint.getOpenValidationRequests())
 

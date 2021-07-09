@@ -3,6 +3,7 @@
         <title>FAIR query engine</title>
         <link href="https://unpkg.com/@triply/yasgui/build/yasgui.min.css" rel="stylesheet" type="text/css" />
         <script src="https://unpkg.com/@triply/yasgui/build/yasgui.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     </head>
 
     <body>
@@ -23,22 +24,34 @@
         </table>
 
         <h3>Current query</h3>
-        <p>The currently used query is:</p>
-        <form method=POST >
-            <textarea id="sparqlQuery" name="sparqlQuery">{{ queryToUse }}</textarea>
-            <br/>
-            <input type="submit" value="Save"/>
-        </form>
-
+        <div id=saveQueryButton onclick="saveQuery()" style="color: #000; cursor: hand; background: #00bb84; display: inline-block;"><p>Save!</p></div>
         <div id="yasgui"></div>
         <script>
             const yasgui = new Yasgui(document.getElementById("yasgui"), {
-                yasqe: { sparql: { endpoint: "{{ dataEndpointUrl }}" }},
-                copyEndpointOnNewTab: true,
+                requestConfig: { endpoint: "{{ dataEndpointUrl }}" },
+                copyEndpointOnNewTab: false,
             });
             tab = yasgui.getTab()
-            tab.setQuery("{{ queryToUse }}")
+            tab.setQuery(`{{ queryToUse }}`)
+
+            function saveQuery() {
+                tab = yasgui.getTab()
+                query = tab.getQuery()
+                
+                data = {
+                    query: query,
+                    requestUri: "{{ requestSpecs.id.value }}"
+                }
+
+                $.post("http://localhost:5000/", data, function(data, status) {
+                    console.log(`${data} and status is ${status}`)
+                })
+            }
         </script>
-        <input type="button" value="Save" onclick="window.alert(yasgui.getTab().getQuery())" />
+        <!-- <style>
+            .yasgui .autocompleteWrapper {
+              display: none !important;
+            }
+          </style> -->
     </body>
 </html>
