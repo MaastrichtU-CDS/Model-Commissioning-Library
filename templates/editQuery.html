@@ -12,13 +12,13 @@
         <p>The model will need the following input variables:</p>
         <table>
             <tr>
-                <th>Variable name</th>
-                <th>Local parameter name</th>
+                <th>Input variable:</th>
+                <th>Definition:</th>
             </tr>
             {% for modelParam in modelParamsList %}
             <tr>
-                <td>{{modelParam.informationElementTypeLabel.value}}</td>
                 <td>{{modelParam.local_param_name.value}}</td>
+                <td>{{modelParam.informationElementTypeLabel.value}}</td>
             </tr>
             {% endfor %}
         </table>

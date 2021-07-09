@@ -120,7 +120,9 @@ def index():
     if requestUri is not None:
         requestSpecs = validationEndpoint.getRequestSpecs(requestUri)
         modelParamsList = modelEndpoint.getModelInputParameters(requestSpecs["model"]["value"])
-        queryToUse = requestSpecs["query"]["value"]
+        queryToUse = ""
+        if "query" in requestSpecs:
+            queryToUse = requestSpecs["query"]["value"]
         return render_template('editQuery.html',
             requestSpecs=requestSpecs,
             modelParamsList=modelParamsList,
