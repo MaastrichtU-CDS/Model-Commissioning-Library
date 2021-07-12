@@ -32,7 +32,7 @@
                 copyEndpointOnNewTab: false,
             });
             tab = yasgui.getTab()
-            tab.setQuery(`{{ queryToUse }}`)
+            tab.setQuery(`{{ queryToUse | safe }}`)
 
             function saveQuery() {
                 tab = yasgui.getTab()
