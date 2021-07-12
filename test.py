@@ -3,7 +3,8 @@ from QueryEngine import QueryEngine
 import pandas as pd
 
 # Load ModelEngine based on FAIR description
-modelEngine = ModelEngine("docker_test_algorithm/stiphout_docker_2011.ttl")
+#modelEngine = ModelEngine("docker_test_algorithm/stiphout_docker_2011.ttl")
+modelEngine = ModelEngine("https://raw.githubusercontent.com/MaastrichtU-CDS/FAIRmodels/main/models/radiotherapy/stiphout_2011.ttl", sparqlEndpoint="http://localhost:7200/repositories/model_cache")
 # Get ModelExecutor object for FAIR model description
 modelExecutor = modelEngine.getModelExecutor()
 
@@ -11,9 +12,9 @@ modelExecutor = modelEngine.getModelExecutor()
 # One execution with local values
 ##########################################################
 probability = modelExecutor.executeModel(inputValues={
-    "https://fairmodels.org/models/radiotherapy/#InputFeature_cTStage": 3,
-    "https://fairmodels.org/models/radiotherapy/#InputFeature_cNStage": 1,
-    "https://fairmodels.org/models/radiotherapy/#InputFeature_TLength": 15
+    "https://raw.githubusercontent.com/MaastrichtU-CDS/FAIRmodels/main/models/radiotherapy/stiphout_2011.ttl#InputFeature_cTStage": 3,
+    "https://raw.githubusercontent.com/MaastrichtU-CDS/FAIRmodels/main/models/radiotherapy/stiphout_2011.ttl#InputFeature_cNStage": 1,
+    "https://raw.githubusercontent.com/MaastrichtU-CDS/FAIRmodels/main/models/radiotherapy/stiphout_2011.ttl#InputFeature_TLength": 15
 })
 print(probability)
 
@@ -21,9 +22,9 @@ print(probability)
 # One execution with ontology term
 ##########################################################
 probability = modelExecutor.executeModel(inputValues={
-    "https://fairmodels.org/models/radiotherapy/#InputFeature_cTStage": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C48728",
-    "https://fairmodels.org/models/radiotherapy/#InputFeature_cNStage": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C48706",
-    "https://fairmodels.org/models/radiotherapy/#InputFeature_TLength": 15
+    "https://raw.githubusercontent.com/MaastrichtU-CDS/FAIRmodels/main/models/radiotherapy/stiphout_2011.ttl#InputFeature_cTStage": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C48728",
+    "https://raw.githubusercontent.com/MaastrichtU-CDS/FAIRmodels/main/models/radiotherapy/stiphout_2011.ttl#InputFeature_cNStage": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C48706",
+    "https://raw.githubusercontent.com/MaastrichtU-CDS/FAIRmodels/main/models/radiotherapy/stiphout_2011.ttl#InputFeature_TLength": 15
 })
 print(probability)
 
