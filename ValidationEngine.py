@@ -36,6 +36,10 @@ class ValidationEngine:
         describeStats = targetDataFrame.describe(include='all')
         uniqueRows = describeStats.T[describeStats.T['unique'] == describeStats.T['count']].index.values
         describeStats[uniqueRows] = np.nan
+
+        ##TODO: the above relies on df.describe(), which omits the unique categories.
+        # Needs to be added that for every category all unique values and counts are given.
+
         return (targetDataFrame.shape, describeStats)
 
 class ValidationTriples:
