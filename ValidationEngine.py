@@ -7,6 +7,8 @@ import urllib
 from datetime import datetime
 import uuid
 import socket
+import pandas as pd
+import numpy as np
 
 fml = rdflib.Namespace("https://fairmodels.org/ontology.owl#")
 
@@ -31,7 +33,10 @@ class ValidationEngine:
                 validationTriples.postTriples(self.__validationEndpoint)
 
     def processBaselineCharacteristics(self, targetDataFrame):
-        return targetDataFrame.describe()
+        describeStats = targetDataFrame.describe(include='all')
+        uniqueRows = describeStats.T[describeStats.T['unique'] == describeStats.T['count']].index.values
+        describeStats[uniqueRows] = np.nan
+        return (targetDataFrame.shape, describeStats)
 
 class ValidationTriples:
     def __init__(self, requestSpecs):
@@ -45,6 +50,11 @@ class ValidationTriples:
         self.__graph.add(
             (
                 self.__resultsObject, fml.at_time, rdflib.Literal(datetime.now())
+            )
+        )
+        self.__graph.add(
+            (
+                self.__resultsObject, fml.at_location, rdflib.Literal(socket.getfqdn())
             )
         )
     
@@ -62,19 +72,26 @@ class ValidationTriples:
         baselineResultsObject = self.__createUri(self.__resultsObject, "baselineResults")
         self.__graph.add((self.__resultsObject, fml.has_baseline_results, baselineResultsObject))
 
-        for colName in baselineCharacteristics.columns:
+        shapeDataSet = baselineCharacteristics[0]
+        self.__graph.add((baselineResultsObject, fml.has_row_size, rdflib.Literal(shapeDataSet[0])))
+        self.__graph.add((baselineResultsObject, fml.has_column_size, rdflib.Literal(shapeDataSet[1])))
+
+        descriptionDataSet = baselineCharacteristics[1]
+
+        for colName in descriptionDataSet.columns:
             columnUriBaseline = self.__createUri(baselineResultsObject, colName)
             self.__graph.add((baselineResultsObject, fml.input_feature_characteristics, columnUriBaseline))
             self.__graph.add((columnUriBaseline, fml.model_parameter_name, rdflib.Literal(colName)))
             self.__graph.add((columnUriBaseline, RDFS.label, rdflib.Literal(colName + " Characteristics")))
             print(colName)
 
-            for index, value in baselineCharacteristics[colName].items():
-                columnCharacteristicUriBaseline = self.__createUri(columnUriBaseline, index)
-                self.__graph.add((columnUriBaseline, fml.has_characteristic, columnCharacteristicUriBaseline))
-                self.__graph.add((columnCharacteristicUriBaseline, fml.has_name, rdflib.Literal(index)))
-                self.__graph.add((columnCharacteristicUriBaseline, RDFS.label, rdflib.Literal(index)))
-                self.__graph.add((columnCharacteristicUriBaseline, fml.has_value, rdflib.Literal(value)))
+            for index, value in descriptionDataSet[colName].items():
+                if not pd.isna(value):
+                    columnCharacteristicUriBaseline = self.__createUri(columnUriBaseline, index)
+                    self.__graph.add((columnUriBaseline, fml.has_characteristic, columnCharacteristicUriBaseline))
+                    self.__graph.add((columnCharacteristicUriBaseline, fml.has_name, rdflib.Literal(index)))
+                    self.__graph.add((columnCharacteristicUriBaseline, RDFS.label, rdflib.Literal(index)))
+                    self.__graph.add((columnCharacteristicUriBaseline, fml.has_value, rdflib.Literal(value)))
     
     def retrieveTriples(self):
         """Fetch triples from in-memory graph and export as raw nt-based string of triples"""
@@ -151,7 +168,6 @@ class ValidationEndpoint:
             }
         } WHERE { }
         """ % (requestId, triplesString)
-        print(insertQuery)
         self.__postQuery(insertQuery)
     def storeQuery(self, requestId, query):
         queryDeleteString = """
