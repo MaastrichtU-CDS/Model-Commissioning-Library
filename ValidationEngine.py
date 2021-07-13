@@ -28,13 +28,14 @@ class ValidationEngine:
 
                 baselineCharacteristics = self.processBaselineCharacteristics(targetDataFrame)
                 validationTriples.storeBaselineCharacteristics(baselineCharacteristics)
-                validationTriples.postTriples(self.__validationEndpoint, validationRequest)
+                validationTriples.postTriples(self.__validationEndpoint)
 
     def processBaselineCharacteristics(self, targetDataFrame):
         return targetDataFrame.describe()
 
 class ValidationTriples:
     def __init__(self, requestSpecs):
+        """Initialize class to generate RDF triples for given validation results"""
         self.__graph = rdflib.Graph()
         self.__resultsObject = self.__createUri("http://" + socket.getfqdn() + "/validation/" + str(uuid.uuid4()))
         self.__graph.add((self.__createUri(requestSpecs["id"]["value"]),
@@ -47,8 +48,9 @@ class ValidationTriples:
             )
         )
     
-    def __createUri(self, uri, *subNames):
-        targetUri = str(uri)
+    def __createUri(self, baseUri, *subNames):
+        """Create type-safe URIs given a certain base URI"""
+        targetUri = str(baseUri)
         for subPath in subNames:
                 targetUri = targetUri + "_" + urllib.parse.quote(subPath)
 
@@ -75,9 +77,11 @@ class ValidationTriples:
                 self.__graph.add((columnCharacteristicUriBaseline, fml.has_value, rdflib.Literal(value)))
     
     def retrieveTriples(self):
+        """Fetch triples from in-memory graph and export as raw nt-based string of triples"""
         return self.__graph.serialize(format="nt").decode('utf-8')
     
-    def postTriples(self, validationEndpoint, requestSpecs):
+    def postTriples(self, validationEndpoint):
+        """Store triples in RDF endpoint, based on ValidationEndpoint instance given"""
         triples = self.retrieveTriples()
         validationEndpoint.storeValidationTriples(str(self.__resultsObject), triples)
 
