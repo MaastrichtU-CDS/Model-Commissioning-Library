@@ -4,6 +4,9 @@ from QueryEngine import QueryEngine
 from rdflib import RDFS
 import rdflib
 import urllib
+from datetime import datetime
+import uuid
+import socket
 
 fml = rdflib.Namespace("https://fairmodels.org/ontology.owl#")
 
@@ -33,10 +36,16 @@ class ValidationEngine:
 class ValidationTriples:
     def __init__(self, requestSpecs):
         self.__graph = rdflib.Graph()
-        self.__resultsObject = self.__createUri(requestSpecs["id"]["value"] + "_results")
+        self.__resultsObject = self.__createUri("http://" + socket.getfqdn() + "/validation/" + str(uuid.uuid4()))
         self.__graph.add((self.__createUri(requestSpecs["id"]["value"]),
             fml.contains_results,
             self.__resultsObject))
+        self.__graph.add((self.__resultsObject, fml.about_model, self.__createUri(requestSpecs["model"]["value"])))
+        self.__graph.add(
+            (
+                self.__resultsObject, fml.at_time, rdflib.Literal(datetime.now())
+            )
+        )
     
     def __createUri(self, uri, *subNames):
         targetUri = str(uri)
@@ -70,7 +79,7 @@ class ValidationTriples:
     
     def postTriples(self, validationEndpoint, requestSpecs):
         triples = self.retrieveTriples()
-        validationEndpoint.storeValidationTriples(requestSpecs["id"]["value"], triples)
+        validationEndpoint.storeValidationTriples(str(self.__resultsObject), triples)
 
 class ValidationEndpoint:
     def __init__(self, endpointUrl):
