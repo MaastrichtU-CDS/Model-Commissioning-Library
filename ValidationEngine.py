@@ -20,7 +20,6 @@ class ValidationEngine:
     def processValidationRequests(self):
         print("Start processing")
         validationRequests = self.__validationEndpoint.getOpenValidationRequests()
-        print(validationRequests)
         for validationRequestRow in validationRequests:
             print("Process request: " + validationRequestRow["id"]["value"])
             validationRequest = self.__validationEndpoint.getRequestSpecs(validationRequestRow["id"]["value"])
