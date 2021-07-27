@@ -33,9 +33,11 @@ class ValidationEngine:
 
                 baselineCharacteristics = self.processBaselineCharacteristics(targetDataFrame)
                 validationTriples.storeBaselineCharacteristics(baselineCharacteristics)
-                validationTriples.postTriples(self.__validationEndpoint)
 
-                validationResults = self.processModelValidation(targetDataFrame, validationRequestRow["model"]["value"])
+                validationMetrics = self.processModelValidation(targetDataFrame, validationRequestRow["model"]["value"])
+                validationTriples.storeValidationMetrics(validationMetrics)
+
+                validationTriples.postTriples(self.__validationEndpoint)
 
     def processBaselineCharacteristics(self, targetDataFrame):
         describeStats = targetDataFrame.describe(include='all')
@@ -86,9 +88,7 @@ class ValidationEngine:
             'calibration_curve': calibration_curve
         }
 
-        print(metrics)
-
-        return None
+        return metrics
 
 class ValidationTriples:
     def __init__(self, requestSpecs):
@@ -145,6 +145,28 @@ class ValidationTriples:
                     self.__graph.add((columnCharacteristicUriBaseline, RDFS.label, rdflib.Literal(index)))
                     self.__graph.add((columnCharacteristicUriBaseline, fml.has_value, rdflib.Literal(value)))
     
+    def storeValidationMetrics(self, validationMetrics):
+        """Loop over validationMetrics dictionary and store information in RDF"""
+
+        validationMetricsUri = self.__createUri(self.__resultsObject, "validationMetrics")
+        self.__graph.add((self.__resultsObject, fml.has_validation_metrics, validationMetricsUri))
+
+        self.storeValidationMetric(validationMetrics, validationMetricsUri)
+
+    def storeValidationMetric(self, validationMetrics, baseUri):
+        for key, value in validationMetrics.items():
+            myMetricUri = self.__createUri(str(baseUri), key)
+            self.__graph.add((baseUri, fml.has_validation_metric, myMetricUri))
+            self.__graph.add((myMetricUri, fml.has_name, rdflib.Literal(key)))
+            self.__graph.add((myMetricUri, RDFS.label, rdflib.Literal(key)))
+
+            if "dict" in str(type(value)):
+                self.storeValidationMetric(value, myMetricUri)
+            else:
+                print(key + " | " + str(type(value)))
+                self.__graph.add((myMetricUri, fml.has_value, rdflib.Literal(value)))
+
+
     def retrieveTriples(self):
         """Fetch triples from in-memory graph and export as raw nt-based string of triples"""
         return self.__graph.serialize(format="nt").decode('utf-8')

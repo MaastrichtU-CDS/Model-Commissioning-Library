@@ -10,7 +10,8 @@ with open("config.json") as f:
 
 validationEngine = ValidationEngine(
     config["validation_endpoint"]["url"],
-    QueryEngine(config["data_endpoint"]["url"]))
+    QueryEngine(config["data_endpoint"]["url"]),
+    modelCacheEndpoint=config["model_cache_endpoint"]["url"])
 validationEngine.processValidationRequests()
 
 # # Load ModelEngine based on FAIR description
