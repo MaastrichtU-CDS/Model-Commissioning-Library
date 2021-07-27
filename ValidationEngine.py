@@ -39,6 +39,8 @@ class ValidationEngine:
 
                 validationTriples.postTriples(self.__validationEndpoint)
 
+                # TODO: set validation request to "Done"
+
     def processBaselineCharacteristics(self, targetDataFrame):
         describeStats = targetDataFrame.describe(include='all')
         uniqueRows = describeStats.T[describeStats.T['unique'] == describeStats.T['count']].index.values
