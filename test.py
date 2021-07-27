@@ -3,7 +3,7 @@ from QueryEngine import QueryEngine
 import pandas as pd
 
 from ValidationEngine import ValidationEngine
-validationEngine = ValidationEngine("http://localhost:7200/repositories/validation_results", QueryEngine("http://as-fair-01.ad.maastro.nl/repositories/sage"))
+validationEngine = ValidationEngine("http://localhost:7200/repositories/validation_results", QueryEngine("http://localhost:7200/repositories/data"))
 validationEngine.processValidationRequests()
 
 # # Load ModelEngine based on FAIR description
