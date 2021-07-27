@@ -1,9 +1,16 @@
 from ModelEngine import ModelEngine
 from QueryEngine import QueryEngine
+from ValidationEngine import ValidationEngine
+import json
 import pandas as pd
 
-from ValidationEngine import ValidationEngine
-validationEngine = ValidationEngine("http://localhost:7200/repositories/validation_results", QueryEngine("http://localhost:7200/repositories/data"))
+config = { }
+with open("config.json") as f:
+    config = json.load(f)
+
+validationEngine = ValidationEngine(
+    config["validation_endpoint"]["url"],
+    QueryEngine(config["data_endpoint"]["url"]))
 validationEngine.processValidationRequests()
 
 # # Load ModelEngine based on FAIR description
