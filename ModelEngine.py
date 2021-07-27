@@ -235,6 +235,7 @@ class ModelEngine:
     """
     def __init__(self, modelUri, sparqlEndpoint=None):
         self.__graph = rdflib.Graph()
+        self.__modelUri = modelUri
         if sparqlEndpoint is None:
             self.__graph.parse(modelUri, format=rdflib.util.guess_format(modelUri))
         else:
@@ -288,4 +289,14 @@ class ModelEngine:
                 print("Unknown algorithm type, but it is definately a docker-based execution")
                 return DockerExecutor(str(resultRow["algorithm"]), self)
         
+        return None
+    
+    def getModelOutputParameterName(self):
+        mappings = {
+            "modelUri": self.__modelUri
+        }
+        queryResults = self.performQueryFromFile("outputParameter", mappings=mappings)
+        for resultRow in queryResults:
+            print(resultRow)
+            return str(resultRow["outputParameter"])
         return None
