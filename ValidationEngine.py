@@ -10,6 +10,8 @@ import socket
 import pandas as pd
 import numpy as np
 from ModelEngine import ModelEngine
+import sklearn.metrics
+import sklearn.calibration
 
 fml = rdflib.Namespace("https://fairmodels.org/ontology.owl#")
 
@@ -54,7 +56,38 @@ class ValidationEngine:
         modelExecutor = modelEngine.getModelExecutor()
         targetDataFrame = modelExecutor.executeModelOnDataFrame(targetDataFrame)
         
+        observedLabel = modelEngine.getModelOutputParameterName()
+        outcomeData = targetDataFrame[['probability', observedLabel]].dropna()
         
+        observed = outcomeData[observedLabel]
+        predicted = outcomeData['probability']
+
+        calibration_curve = None
+        try:
+            calibration_curve = sklearn.calibration.calibration_curve(observed, predicted)
+        except:
+            print("Could not calculate calibration curve (too little number of bins?)")
+        
+        precision, recall, prerec_thresholds = sklearn.metrics.precision_recall_curve(observed, predicted)
+        fpr, tpr, roc_thresholds = sklearn.metrics.roc_curve(observed, predicted)
+
+        metrics = {
+            'count': outcomeData.shape[0],
+            'auc': sklearn.metrics.roc_auc_score(observed, predicted),
+            'brier': sklearn.metrics.brier_score_loss(observed, predicted),
+            'precision_recall_curve': {
+                'precision': precision,
+                'recall': recall
+            },
+            'roc_curve': {
+                'fpr': fpr,
+                'tpr': tpr
+            },
+            'calibration_curve': calibration_curve
+        }
+
+        print(metrics)
+
         return None
 
 class ValidationTriples:
