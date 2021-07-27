@@ -9,13 +9,15 @@ import uuid
 import socket
 import pandas as pd
 import numpy as np
+from ModelEngine import ModelEngine
 
 fml = rdflib.Namespace("https://fairmodels.org/ontology.owl#")
 
 class ValidationEngine:
-    def __init__(self, validationEndpointUrl, dataQueryEngine):
+    def __init__(self, validationEndpointUrl, dataQueryEngine, modelCacheEndpoint=None):
         self.__validationEndpoint = ValidationEndpoint(validationEndpointUrl)
         self.__dataQueryEngine = dataQueryEngine
+        self.__modelCacheEndpoint = modelCacheEndpoint
     
     def processValidationRequests(self):
         print("Start processing")
@@ -31,6 +33,8 @@ class ValidationEngine:
                 validationTriples.storeBaselineCharacteristics(baselineCharacteristics)
                 validationTriples.postTriples(self.__validationEndpoint)
 
+                validationResults = self.processModelValidation(targetDataFrame, validationRequestRow["model"]["value"])
+
     def processBaselineCharacteristics(self, targetDataFrame):
         describeStats = targetDataFrame.describe(include='all')
         uniqueRows = describeStats.T[describeStats.T['unique'] == describeStats.T['count']].index.values
@@ -40,6 +44,18 @@ class ValidationEngine:
         # Needs to be added that for every category all unique values and counts are given.
 
         return (targetDataFrame.shape, describeStats)
+    
+    def processModelValidation(self, targetDataFrame, modelUri):
+        if self.__modelCacheEndpoint is not None:
+            modelEngine = ModelEngine(modelUri, sparqlEndpoint=self.__modelCacheEndpoint)
+        else:
+            modelEngine = ModelEngine(modelUri)
+        # Get ModelExecutor object for FAIR model description
+        modelExecutor = modelEngine.getModelExecutor()
+        targetDataFrame = modelExecutor.executeModelOnDataFrame(targetDataFrame)
+        
+        
+        return None
 
 class ValidationTriples:
     def __init__(self, requestSpecs):
