@@ -171,7 +171,8 @@ class ValidationTriples:
 
     def retrieveTriples(self):
         """Fetch triples from in-memory graph and export as raw nt-based string of triples"""
-        return self.__graph.serialize(format="nt").decode('utf-8')
+        # TODO this function creates a warning message, but unsure what this message means?
+        return self.__graph.serialize(format="nt")
     
     def postTriples(self, validationEndpoint):
         """Store triples in RDF endpoint, based on ValidationEndpoint instance given"""

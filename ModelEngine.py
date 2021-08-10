@@ -240,7 +240,7 @@ class ModelEngine:
             self.__graph.parse(modelUri, format=rdflib.util.guess_format(modelUri))
         else:
             rdfXmlDataString = self.__getFromEndpoint(modelUri, sparqlEndpoint)
-            self.__graph.parse(data=rdfXmlDataString)
+            self.__graph.parse(data=rdfXmlDataString, format='xml')
     def __getFromEndpoint(self, modelUri, sparqlEndpoint):
         sparql = SPARQLWrapper(sparqlEndpoint)
 
