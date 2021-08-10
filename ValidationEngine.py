@@ -97,10 +97,10 @@ class ValidationTriples:
         """Initialize class to generate RDF triples for given validation results"""
         self.__graph = rdflib.Graph()
         self.__resultsObject = self.__createUri("http://" + socket.getfqdn() + "/validation/" + str(uuid.uuid4()))
-        # TODO: java application cannot handle circular dependency (only DAGs)
         self.__graph.add((self.__createUri(requestSpecs["id"]["value"]),
             fml.contains_results,
             self.__resultsObject))
+        # TODO: java application determines request based on predicate about_model    
         # self.__graph.add((self.__resultsObject, fml.about_model, self.__createUri(requestSpecs["model"]["value"])))
         self.__graph.add(
             (
