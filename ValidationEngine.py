@@ -39,7 +39,7 @@ class ValidationEngine:
 
                 validationTriples.postTriples(self.__validationEndpoint)
 
-                # TODO: set validation request to "Done"
+                self.__validationEndpoint.markRequestAsDone(validationRequestRow["id"]["value"])
 
     def processBaselineCharacteristics(self, targetDataFrame):
         describeStats = targetDataFrame.describe(include='all')
@@ -97,10 +97,11 @@ class ValidationTriples:
         """Initialize class to generate RDF triples for given validation results"""
         self.__graph = rdflib.Graph()
         self.__resultsObject = self.__createUri("http://" + socket.getfqdn() + "/validation/" + str(uuid.uuid4()))
+        # TODO: java application cannot handle circular dependency (only DAGs)
         self.__graph.add((self.__createUri(requestSpecs["id"]["value"]),
             fml.contains_results,
             self.__resultsObject))
-        self.__graph.add((self.__resultsObject, fml.about_model, self.__createUri(requestSpecs["model"]["value"])))
+        # self.__graph.add((self.__resultsObject, fml.about_model, self.__createUri(requestSpecs["model"]["value"])))
         self.__graph.add(
             (
                 self.__resultsObject, fml.at_time, rdflib.Literal(datetime.now())
@@ -208,6 +209,35 @@ class ValidationEndpoint:
         }
         """
         return self.__defaultQueryAssignment(queryString)
+    def markRequestAsDone(self, requestId):
+        queryString = """
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX fml: <https://fairmodels.org/ontology.owl#>
+
+        DELETE {
+            ?id fml:has_status ?statusObj.
+            ?statusObj rdf:type ?statusClass.
+        }
+        WHERE {
+            BIND(<%s> AS ?id).
+            ?id fml:has_status ?statusObj.
+            ?statusObj rdf:type ?statusClass.
+        }
+        """ % requestId
+        self.__postQuery(queryString)
+
+        queryString = """
+        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+        PREFIX fml: <https://fairmodels.org/ontology.owl#>
+
+        INSERT {
+            ?id fml:has_status [ rdf:type fml:Done ].
+        }
+        WHERE {
+            BIND(<%s> AS ?id).
+        }
+        """ % requestId
+        return self.__postQuery(queryString)
     def getRequestSpecs(self, requestId):
         queryString = """
         PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
