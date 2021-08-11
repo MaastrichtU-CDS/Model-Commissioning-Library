@@ -1,0 +1,62 @@
+name: Build Container CI
+
+on: [push]
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  
+  frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Extract branch name
+        shell: bash
+        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+        id: extract_branch
+      - name: downcase REPO
+        run: |
+          echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
+      - name: Log in to the Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build container frontend
+        id: docker_build_frontend
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: frontend.Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.REPO }}/frontend:${{ steps.extract_branch.outputs.branch }}
+      - name: Build container frontend Release (latest)
+        id: docker_build_frontend_release
+        uses: docker/build-push-action@v2
+        if: steps.extract_branch.outputs.branch == 'master'
+        with:
+          context: .
+          file: frontend.Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.REPO }}/frontend:latest
+      - name: Build container serviceworker
+        id: docker_build_serviceworker
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: service.Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.REPO }}/serviceworker:${{ steps.extract_branch.outputs.branch }}
+      - name: Build container serviceworker Release (latest)
+        id: docker_build_serviceworker_release
+        uses: docker/build-push-action@v2
+        if: steps.extract_branch.outputs.branch == 'master'
+        with:
+          context: .
+          file: service.Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.REPO }}/serviceworker:latest
