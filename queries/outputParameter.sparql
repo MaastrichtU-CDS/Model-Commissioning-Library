@@ -1,0 +1,11 @@
+PREFIX fml: <https://fairmodels.org/ontology.owl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?outputParameter ?outputParameterLabel
+WHERE {
+    <${modelUri}> fml:has_objective ?objective.
+    ?objective fml:based_on_parameter ?parameter.
+    ?parameter fml:model_parameter_name ?outputParameter.
+    ?parameter rdfs:label ?outputParameterLabel.
+}

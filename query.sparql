@@ -1,0 +1,28 @@
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX dbo: <http://um-cds/ontologies/databaseontology/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX data: <http://triplifier.local/rdf/ontology/>
+
+select ?tableRow (xsd:int(?cTval) as ?cT) (xsd:int(?cNval) as ?cN) ?tLength (xsd:int(?pCRval) as ?ypT0N0)
+where {
+  ?tableRow rdf:type data:mergedSubSet.
+  ?tableRow dbo:has_column [
+      rdf:type data:mergedSubSet.cT;
+      dbo:has_cell [
+        dbo:has_value ?cTval;
+      ];
+  ];
+        dbo:has_column [
+      rdf:type data:mergedSubSet.cN;
+      dbo:has_cell [
+        dbo:has_value ?cNval;
+      ];
+  ];
+        dbo:has_column [
+      rdf:type data:mergedSubSet.pCR;
+      dbo:has_cell [
+        dbo:has_value ?pCRval;
+      ];
+  ].
+  BIND (xsd:double(7.5) as ?tLength).
+}

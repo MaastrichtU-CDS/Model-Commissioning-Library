@@ -4,3 +4,4 @@ pandas
 SPARQLWrapper
 docker
 Flask
+sklearn

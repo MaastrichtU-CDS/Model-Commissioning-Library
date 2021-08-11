@@ -5,6 +5,7 @@ import math
 import docker
 import requests
 import pandas
+from SPARQLWrapper import SPARQLWrapper, RDFXML
 
 class FML:
     prefix = "https://fairmodels.org/ontology.owl#"
@@ -232,9 +233,30 @@ class ModelEngine:
     """
     Base class to fetch model specifications, and select the execution type of the model.
     """
-    def __init__(self, modelUri):
+    def __init__(self, modelUri, sparqlEndpoint=None):
         self.__graph = rdflib.Graph()
-        self.__graph.parse(modelUri, format=rdflib.util.guess_format(modelUri))
+        self.__modelUri = modelUri
+        if sparqlEndpoint is None:
+            self.__graph.parse(modelUri, format=rdflib.util.guess_format(modelUri))
+        else:
+            rdfXmlDataString = self.__getFromEndpoint(modelUri, sparqlEndpoint)
+            self.__graph.parse(data=rdfXmlDataString, format='xml')
+    def __getFromEndpoint(self, modelUri, sparqlEndpoint):
+        sparql = SPARQLWrapper(sparqlEndpoint)
+
+        sparql.setQuery("""
+            CONSTRUCT {
+                ?s ?p ?o.
+            } WHERE {
+                GRAPH <%s> {
+                    ?s ?p ?o.
+                }
+            }
+        """ % modelUri)
+
+        sparql.setReturnFormat(RDFXML)
+        results = sparql.query().convert()
+        return results.serialize(format='xml')
     def __getSparqlQueryFromFile(self, queryName, mappings=None):
         query = ""
         with open(os.path.join("queries", queryName + ".sparql")) as f:
@@ -267,4 +289,14 @@ class ModelEngine:
                 print("Unknown algorithm type, but it is definately a docker-based execution")
                 return DockerExecutor(str(resultRow["algorithm"]), self)
         
+        return None
+    
+    def getModelOutputParameterName(self):
+        mappings = {
+            "modelUri": self.__modelUri
+        }
+        queryResults = self.performQueryFromFile("outputParameter", mappings=mappings)
+        for resultRow in queryResults:
+            print(resultRow)
+            return str(resultRow["outputParameter"])
         return None
