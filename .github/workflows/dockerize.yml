@@ -27,7 +27,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build container frontend
-        id: docker_build
+        id: docker_build_frontend
         uses: docker/build-push-action@v2
         with:
           context: .
@@ -35,7 +35,7 @@ jobs:
           push: true
           tags: ghcr.io/${{ env.REPO }}/frontend:${{ steps.extract_branch.outputs.branch }}
       - name: Build container frontend Release (latest)
-        id: docker_build_release
+        id: docker_build_frontend_release
         uses: docker/build-push-action@v2
         if: steps.extract_branch.outputs.branch == 'master'
         with:
@@ -44,7 +44,7 @@ jobs:
           push: true
           tags: ghcr.io/${{ env.REPO }}/frontend:latest
       - name: Build container serviceworker
-        id: docker_build
+        id: docker_build_serviceworker
         uses: docker/build-push-action@v2
         with:
           context: .
@@ -52,7 +52,7 @@ jobs:
           push: true
           tags: ghcr.io/${{ env.REPO }}/serviceworker:${{ steps.extract_branch.outputs.branch }}
       - name: Build container serviceworker Release (latest)
-        id: docker_build_release
+        id: docker_build_serviceworker_release
         uses: docker/build-push-action@v2
         if: steps.extract_branch.outputs.branch == 'master'
         with:
