@@ -233,8 +233,9 @@ class ModelEngine:
     """
     Base class to fetch model specifications, and select the execution type of the model.
     """
-    def __init__(self, modelUri, sparqlEndpoint=None):
+    def __init__(self, modelUri, sparqlEndpoint=None, libraryLocation=None):
         self.__graph = rdflib.Graph()
+        self.__libraryLocation = libraryLocation
         self.__modelUri = modelUri
         if sparqlEndpoint is None:
             self.__graph.parse(modelUri, format=rdflib.util.guess_format(modelUri))
@@ -259,7 +260,11 @@ class ModelEngine:
         return results.serialize(format='xml')
     def __getSparqlQueryFromFile(self, queryName, mappings=None):
         query = ""
-        with open(os.path.join("queries", queryName + ".sparql")) as f:
+        if self.__libraryLocation is not None:
+            pathForQuery = os.path.join(self.__libraryLocation, "queries", queryName + ".sparql")
+        else:
+            pathForQuery = os.path.join("queries", queryName + ".sparql")
+        with open(pathForQuery) as f:
             query = f.read()
         if mappings is not None:
             temp_obj = Template(query)
